@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
-import 'package:bloc_generator/src/utils.dart';
-import 'package:bloc_generator/src/bloc_generator.dart';
-import 'package:bloc_generator/src/i18n_generator.dart';
+import 'package:bloc_gen_plus/src/utils.dart';
+import 'package:bloc_gen_plus/src/bloc_generator.dart';
+import 'package:bloc_gen_plus/src/i18n_generator.dart';
 
 void main(List<String> args) {
   if (args.isEmpty || args[0] == 'shortcut') {
