@@ -1,0 +1,30 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+DemoState _$DemoStateFromJson(Map<String, dynamic> json) => DemoState(
+      word: json['word'] == null
+          ? const DictWord(word: "")
+          : DictWord.fromJson(json['word'] as Map<String, dynamic>),
+      status: json['status'] == null
+          ? DictStatus.init
+          : DictStatus.fromJson(json['status'] as String),
+      action: json['Action'] == null
+          ? null
+          : DictAction.fromJson(json['Action'] as String),
+      error: json['error'] == null
+          ? null
+          : DictError.fromJson(json['error'] as Map<String, dynamic>),
+      hint: json['hint'] as String?,
+      similar:
+          (json['similar'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    );
+
+Map<String, dynamic> _$DemoStateToJson(DemoState instance) => <String, dynamic>{
+      'word': instance.word.toJson(),
+      'status': instance.status.toJson(),
+      'Action': instance.action?.toJson(),
+      'error': instance.error?.toJson(),
+      'hint': instance.hint,
+      'similar': instance.similar,
+    };

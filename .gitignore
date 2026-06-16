@@ -1,0 +1,6 @@
+lib/demo
+.idea
+*.dart
+*.log
+*.pyc
+/.idea/
