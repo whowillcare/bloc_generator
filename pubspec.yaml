@@ -1,6 +1,10 @@
 name: bloc_generator
 description: A Dart/Flutter code generator for Bloc classes and i18n localization files.
 version: 1.0.0
+homepage: https://github.com/whowillcare/bloc_generator
+repository: https://github.com/whowillcare/bloc_generator
+issue_tracker: https://github.com/whowillcare/bloc_generator/issues
+
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

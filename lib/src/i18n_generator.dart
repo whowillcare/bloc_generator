@@ -375,11 +375,11 @@ class %cls {
     if (currentLocale == null) {
       String locale = '';
       if (kIsWeb){
-        locale = ui.window.locale.toLanguageTag();
+        locale = ui.PlatformDispatcher.instance.locale.toLanguageTag();
       }else {
         locale = Platform.localeName;
       }
-      final PL = locale.replaceAll(RegExp(r'\\.*\$'),"").split('_');
+      final PL = locale.replaceAll(RegExp(r'\\..*\$'), "").replaceAll('-', '_').split('_');
       currentLocale = Locale(PL[0],PL.length > 1 ? PL[1] : null) ;
     }
     final cls = supportedLocale(currentLocale!);

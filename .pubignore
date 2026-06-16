@@ -1,0 +1,6 @@
+.git/
+.gitignore
+.dart_tool/
+build.sh
+createIndex.sh
+*.log
