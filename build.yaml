@@ -2,7 +2,7 @@ builders:
   i18n_builder:
     import: 'package:bloc_generator/builder.dart'
     builder_factories: ['i18nBuilder']
-    build_extensions: {'.i18n.yaml': ['.i18n.dart']}
+    build_extensions: {'.yaml': ['.i18n.dart']}
     auto_apply: dependents
     build_to: source
 
@@ -10,7 +10,39 @@ builders:
     import: 'package:bloc_generator/builder.dart'
     builder_factories: ['blocBuilder']
     build_extensions: {
-      '.bloc.yaml': [
+      'demo.yaml': [
+        'demobloc/demo.dart',
+        'demobloc/demo.s.dart',
+        'demobloc/demo.e.dart',
+        'demobloc/demo.b.dart',
+        'demobloc/demo.d.dart',
+        'demobloc/demo.c.dart'
+      ],
+      'demo_parent.yaml': [
+        'demo_parent/demo_parent.dart',
+        'demo_parent/demo_parent.s.dart',
+        'demo_parent/demo_parent.e.dart',
+        'demo_parent/demo_parent.b.dart',
+        'demo_parent/demo_parent.d.dart',
+        'demo_parent/demo_parent.c.dart'
+      ],
+      'state_only.yaml': [
+        'demostate/demo.dart',
+        'demostate/demo.s.dart',
+        'demostate/demo.e.dart',
+        'demostate/demo.b.dart',
+        'demostate/demo.d.dart',
+        'demostate/demo.c.dart'
+      ],
+      'event_only.yaml': [
+        'demoevent/demo.dart',
+        'demoevent/demo.s.dart',
+        'demoevent/demo.e.dart',
+        'demoevent/demo.b.dart',
+        'demoevent/demo.d.dart',
+        'demoevent/demo.c.dart'
+      ],
+      '.yaml': [
         '.dart',
         '.s.dart',
         '.e.dart',

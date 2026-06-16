@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      bloc_generator|bloc_builder:
+        enabled: true
+        generate_for:
+          - lib/bloc/*.yaml
+      bloc_generator|i18n_builder:
+        enabled: true
+        generate_for:
+          - lib/i18n/*.yaml

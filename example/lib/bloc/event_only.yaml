@@ -1,0 +1,13 @@
+part: demo.dart
+path: "demoevent"
+import: "import '../../models.dart';"
+eventOnly: true
+event:
+  name: DemoEvent
+  dest: .e.dart
+  events:
+    SomeEvent:
+    FinishEvent:
+    CoolEvent:
+    ThirdEvent:
+    LastEvent~last:

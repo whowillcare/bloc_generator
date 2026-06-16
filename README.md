@@ -8,8 +8,8 @@ It supports both a **Command Line Interface (CLI)** for direct code generation a
 
 ## Features
 
-- 📦 **Automated Bloc Generation**: Generate robust Bloc files (`.dart`, `.s.dart`, `.e.dart`, `.b.dart`) from a single `.bloc.yaml` definition.
-- 🌐 **i18n Localization Generation**: Compile translation sheets (`.i18n.yaml`) into strongly-typed localizations helpers (`.i18n.dart`).
+- 📦 **Automated Bloc Generation**: Generate robust Bloc files (`.dart`, `.s.dart`, `.e.dart`, `.b.dart`) from a single `.yaml` definition.
+- 🌐 **i18n Localization Generation**: Compile translation sheets (`.yaml`) into strongly-typed localization helpers.
 - 🔄 **Build Runner Compatibility**: Runs seamlessly alongside packages like `json_serializable` and `equatable`.
 - 🛠️ **CLI Support**: Generate code on demand with customized CLI subcommands.
 
@@ -40,8 +40,21 @@ dev_dependencies:
 
 To leverage the Dart build framework for automated compile-time generation:
 
-1. Create a `.bloc.yaml` file in the folder where you want your Bloc code to be generated (e.g. `lib/bloc/my_bloc.bloc.yaml`).
-2. Create a `.i18n.yaml` file for translation keys (e.g. `lib/l10n/strings.i18n.yaml`).
+1. Configure a `build.yaml` in your project root to specify which directories hold your bloc and translation configurations. For example:
+   ```yaml
+   targets:
+     $default:
+       builders:
+         bloc_generator|bloc_builder:
+           enabled: true
+           generate_for:
+             - lib/bloc/*.yaml
+         bloc_generator|i18n_builder:
+           enabled: true
+           generate_for:
+             - lib/i18n/*.yaml
+   ```
+2. Create your `.yaml` configuration files inside the matching folders (e.g., `lib/bloc/demo.yaml` or `lib/i18n/strings.yaml`).
 3. Run the standard build command:
 
 ```bash
@@ -49,7 +62,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 > [!TIP]
-> Ensure your `.bloc.yaml` files are placed inside the target output directories and have `path: ""` specified in the YAML configuration. This allows `build_runner` to resolve relative file dependencies and automatically run downstream builders like `json_serializable` in the correct sequence.
+> Ensure your bloc configuration `.yaml` files have `path: ""` specified in the YAML configuration to output the generated files in the same directory. This allows `build_runner` to resolve relative file dependencies and automatically run downstream builders like `json_serializable` in the correct sequence.
 
 ---
 
@@ -78,9 +91,26 @@ dart run bin/generator.dart i18n --yaml path/to/strings.yaml --output path/to/ou
 
 ---
 
+## Usage Mode 3: Shortcut Mode (Scan & Generate on Demand)
+
+You can run all generators on demand with a single command. The tool reads your `build.yaml` configuration to detect which directories are registered for `bloc_builder` and `i18n_builder`, scans them for config files, automatically generates code for files that have changed (using `.modified` markers to prevent redundant builds), and runs downstream builders.
+
+To run shortcut mode, execute:
+```bash
+# Explicitly
+dart run bin/generator.dart shortcut
+
+# Or simply with no arguments (defaults to shortcut mode)
+dart run bin/generator.dart
+```
+
+*Note: If no `build.yaml` is present, it recursively scans the `lib/` directory for any files matching `**/*.yaml` by default.*
+
+---
+
 ## YAML Configuration Formats
 
-### Bloc Configuration (`.bloc.yaml`)
+### Bloc Configuration (e.g. `demo.yaml`)
 
 ```yaml
 part: demo.dart
@@ -112,7 +142,7 @@ bloc:
   useReplay: true   # Enables ReplayBlocMixin
 ```
 
-### i18n Configuration (`.i18n.yaml`)
+### i18n Configuration (e.g. `strings.yaml`)
 
 ```yaml
 settings:
@@ -145,4 +175,4 @@ Strings:
 
 ## Example Project
 
-A complete working example demonstrating configuration files, parent class inheritance, models integration, and successful build runner execution can be found in the [example/](file:///Users/sam/Project/generator/example) directory.
+A complete working example demonstrating configuration files, parent class inheritance, models integration, and successful build runner execution can be found in the [example/] directory.

@@ -1,0 +1,30 @@
+part: demo.dart
+path: "demobloc"
+import: "import '../../models.dart';"
+state:
+  name: DemoState
+  equal: true
+  dest: .d.dart
+  useJson: false
+  props:
+    - 'DictWord word=const DictWord(word: "")'
+    - DictStatus status=DictStatus.init// current word status
+    # add json key Action direction
+    - 'DictAction? action// current action (jk@Action)'
+    - DictError? error//error status
+    - String? hint//Definition with some key words replaced
+    - List<String>? similar// word that might be similar to current word
+event:
+  name: DemoEvent
+  dest: .e.dart
+  events:
+    SomeEvent:
+    FinishEvent:
+    CoolEvent:
+    ThirdEvent:
+    LastEvent~last:
+bloc:
+  name: DemoBloc
+  dest: .b.dart
+  useReplay: true
+  useHydrate: false

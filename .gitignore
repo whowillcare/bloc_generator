@@ -1,6 +1,22 @@
-lib/demo
-.idea
-*.dart
+# IDE and system files
+.idea/
+.vscode/
 *.log
 *.pyc
-/.idea/
+
+# Dart build and cache
+.dart_tool/
+build/
+
+# Ignore generated translation files in example
+example/lib/i18n/**/*.dart
+
+# Ignore generated bloc files in example
+example/lib/bloc/**/*.dart
+
+# Keep YAML configuration files
+!example/lib/i18n/**/*.yaml
+!example/lib/bloc/**/*.yaml
+
+# Ignore shortcut build markers
+*.modified
