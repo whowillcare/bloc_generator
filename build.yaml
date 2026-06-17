@@ -4,7 +4,7 @@ builders:
     builder_factories: ['i18nBuilder']
     build_extensions: {'.yaml': ['.i18n.dart']}
     auto_apply: dependents
-    build_to: source
+    build_to: cache
 
   bloc_builder:
     import: 'package:bloc_gen_plus/bloc_gen_plus.dart'

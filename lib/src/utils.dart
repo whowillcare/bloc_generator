@@ -149,6 +149,29 @@ bool shouldBuild(String yamlPath, {bool verbose = true}) {
               }
             }
           }
+          final includeSubdir = settings['include']?.toString();
+          if (includeSubdir != null && includeSubdir.isNotEmpty) {
+            final includePath = p.normalize(p.join(yamlDir, includeSubdir));
+            final includeDir = Directory(includePath);
+            if (includeDir.existsSync()) {
+              try {
+                final includedFiles = includeDir
+                    .listSync(recursive: true)
+                    .whereType<File>()
+                    .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
+                    .toList();
+                for (final f in includedFiles) {
+                  final fStat = f.statSync();
+                  if (fStat.modified.isAfter(markStat.modified)) {
+                    if (verbose) {
+                      print("You have changed to included file: ${f.path}");
+                    }
+                    return true;
+                  }
+                }
+              } catch (_) {}
+            }
+          }
         } else {
           final path = data['path']?.toString() ?? '';
           final part = data['part']?.toString() ?? '';

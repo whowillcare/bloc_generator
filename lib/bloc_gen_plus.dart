@@ -20,17 +20,55 @@ class I18nBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
-    if (!shouldBuild(inputId.path, verbose: false)) {
-      final path = inputId.path;
-      final newPath = path.substring(0, path.length - '.yaml'.length) + '.i18n.dart';
-      final outputId = AssetId(inputId.package, newPath);
+    final outputId = inputId.changeExtension('.i18n.dart');
+
+    // First read the content of the file to see if it is a main i18n file
+    String content;
+    Map<String, dynamic> data;
+    try {
+      content = await buildStep.readAsString(inputId);
+      final doc = loadYaml(content);
+      if (doc is! Map || !doc.containsKey('Languages')) {
+        // Not a main i18n file, write a dummy marker and return early
+        await buildStep.writeAsString(
+          outputId,
+          '// Not a main i18n file\n',
+        );
+        return;
+      }
+      data = convertYamlMap(doc as YamlMap);
+    } catch (_) {
+      // If parsing fails or we cannot read, write a dummy marker
       await buildStep.writeAsString(
         outputId,
-        '// Generated i18n marker file for ${inputId.path}\n// Timestamp: ${DateTime.now()}\n',
+        '// Not a main i18n file\n',
       );
       return;
     }
-    final content = await buildStep.readAsString(inputId);
+
+    // Preload the included files so build_runner tracks them as dependencies
+    await preloadI18nReferencedFiles(buildStep, data);
+
+    if (!shouldBuild(inputId.path, verbose: false)) {
+      // If we shouldn't build, try to keep the existing content of the marker file
+      // to avoid triggering downstream builders or indicating changes.
+      String existingContent = '';
+      try {
+        if (await buildStep.canRead(outputId)) {
+          existingContent = await buildStep.readAsString(outputId);
+        }
+      } catch (_) {}
+      if (existingContent.isNotEmpty) {
+        await buildStep.writeAsString(outputId, existingContent);
+      } else {
+        await buildStep.writeAsString(
+          outputId,
+          '// Generated i18n marker file for ${inputId.path}\n',
+        );
+      }
+      return;
+    }
+
     final yamlDir = p.dirname(p.join(Directory.current.path, inputId.path));
 
     final oldWriter = fileWriter;
@@ -39,15 +77,15 @@ class I18nBuilder implements Builder {
     fileWriter = (dest, fileContent, overwrite) {
       final packageRoot = Directory.current.path;
       final relPath = p.relative(dest, from: packageRoot);
-      final outputId = AssetId(inputId.package, relPath);
+      final outId = AssetId(inputId.package, relPath);
 
       bool isAllowed = false;
       try {
-        isAllowed = buildStep.allowedOutputs.contains(outputId);
+        isAllowed = buildStep.allowedOutputs.contains(outId);
       } catch (_) {}
 
       if (isAllowed) {
-        futures.add(buildStep.writeAsString(outputId, fileContent));
+        futures.add(buildStep.writeAsString(outId, fileContent));
       } else {
         // Fallback to direct file writing since translation files (e.g. English.dart)
         // are dynamic and cannot be declared statically in buildExtensions.
@@ -81,9 +119,6 @@ class I18nBuilder implements Builder {
       fileWriter = oldWriter;
     }
 
-    final path = inputId.path;
-    final newPath = path.substring(0, path.length - '.yaml'.length) + '.i18n.dart';
-    final outputId = AssetId(inputId.package, newPath);
     await buildStep.writeAsString(
       outputId,
       '// Generated i18n marker file for ${inputId.path}\n// Timestamp: ${DateTime.now()}\n',
@@ -187,6 +222,35 @@ class BlocBuilder implements Builder {
       } catch (_) {}
     } finally {
       fileWriter = oldWriter;
+    }
+  }
+}
+
+Future<void> preloadI18nReferencedFiles(BuildStep buildStep, Map<String, dynamic> data) async {
+  final inputId = buildStep.inputId;
+  final yamlDir = p.dirname(inputId.path);
+  final settings = data['settings'] as Map? ?? {};
+  final includeSubdir = settings['include']?.toString();
+  if (includeSubdir != null && includeSubdir.isNotEmpty) {
+    final includePath = p.normalize(p.join(yamlDir, includeSubdir));
+    final includeDir = Directory(p.join(Directory.current.path, includePath));
+    if (includeDir.existsSync()) {
+      try {
+        final files = includeDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
+            .toList();
+        for (final file in files) {
+          final relPath = p.relative(file.path, from: Directory.current.path);
+          final assetId = AssetId(inputId.package, relPath);
+          if (await buildStep.canRead(assetId)) {
+            final fileContent = await buildStep.readAsString(assetId);
+            final absolutePath = p.canonicalize(file.path);
+            inMemoryFiles[absolutePath] = fileContent;
+          }
+        }
+      } catch (_) {}
     }
   }
 }

@@ -128,11 +128,62 @@ class I18nGenerationResult {
   });
 }
 
-I18nGenerationResult runI18nGenerator(String yamlContent) {
+void _deepMerge(Map target, Map source) {
+  for (final key in source.keys) {
+    final sourceValue = source[key];
+    final targetValue = target[key];
+    if (sourceValue is Map) {
+      if (targetValue is Map) {
+        _deepMerge(targetValue, sourceValue);
+      } else {
+        final newMap = <String, dynamic>{};
+        _deepMerge(newMap, sourceValue);
+        target[key] = newMap;
+      }
+    } else {
+      target[key] = sourceValue;
+    }
+  }
+}
+
+I18nGenerationResult runI18nGenerator(String yamlContent, [String? yamlPath]) {
   final yamlMap = loadYaml(yamlContent) as YamlMap;
   final obj = convertYamlMap(yamlMap);
 
   final settings = obj['settings'] as Map? ?? {};
+  final includeSubdir = settings['include']?.toString();
+  if (includeSubdir != null && includeSubdir.isNotEmpty) {
+    final yamlDir = yamlPath != null && yamlPath.isNotEmpty ? p.dirname(yamlPath) : Directory.current.path;
+    final includePath = p.normalize(p.join(yamlDir, includeSubdir));
+    final includeDir = Directory(includePath);
+    if (includeDir.existsSync()) {
+      try {
+        final files = includeDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
+
+        obj['Strings'] ??= <String, dynamic>{};
+        final stringsMap = obj['Strings'] as Map;
+
+        for (final file in files) {
+          final content = loadContent(file.path);
+          if (content != null && content.isNotEmpty) {
+            final includedYaml = loadYaml(content);
+            if (includedYaml is Map) {
+              final includedMap = convertYamlMap(includedYaml as YamlMap);
+              _deepMerge(stringsMap, includedMap);
+            }
+          }
+        }
+      } catch (e) {
+        stderr.writeln("Warning: failed to process include subfolder '$includeSubdir': $e");
+      }
+    }
+  }
+
   final l18n = settings['l18n']?.toString() ?? 'l18n';
   final helperName = settings['helper']?.toString() ?? 'S';
   final defaultCls = settings['default_class']?.toString() ?? 'TI';
@@ -305,7 +356,7 @@ void generateI18nMultiFile(
   bool interfaceOnly,
   String argsList,
 ) {
-  final gen = runI18nGenerator(yamlContent);
+  final gen = runI18nGenerator(yamlContent, yamlPath);
 
   final helperName = helperNameOpt.isNotEmpty ? helperNameOpt : gen.helperName;
   final defaultCls = defaultClsOpt.isNotEmpty ? defaultClsOpt : gen.defaultCls;

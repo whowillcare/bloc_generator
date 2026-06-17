@@ -1,3 +1,10 @@
+## 1.1.0
+
+* Added support for loading and merging translation strings from a subdirectory using the `include` setting in the main translation YAML.
+* Enhanced `I18nBuilder` build step dependency preloading via `buildStep.readAsString` to track changes in the `include` folder and trigger incremental rebuilds in `build_runner`.
+* Configured `i18n_builder` to write the `.i18n.dart` marker files directly to the build runner's cache (`build_to: cache`) instead of polluting the source tree.
+* Cleaned up duplicate and verbose manual path generation logic.
+
 ## 1.0.2
 
 * Implemented `shouldBuild` checks in `build_runner` builders to avoid unnecessary builds and skip execution for unmodified config files.
