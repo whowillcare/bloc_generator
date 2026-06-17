@@ -1,3 +1,7 @@
+## 1.0.1
+
+* Widened the dependency constraint for the `build` package to resolve version solving conflicts in consumer projects using newer `analyzer` and `test` versions.
+
 ## 1.0.0
 
 * Initial release of `bloc_gen_plus`.
