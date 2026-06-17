@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:yaml/yaml.dart';
+import 'package:path/path.dart' as p;
 
 class DartTemplate {
   final String template;
@@ -99,3 +100,118 @@ String? loadContent(String path) {
   }
   return null;
 }
+
+bool fileExists(String path) {
+  if (path.isEmpty) return false;
+  if (inMemoryFiles.containsKey(path)) return true;
+  return File(path).existsSync();
+}
+
+bool shouldBuild(String yamlPath, {bool verbose = true}) {
+  final markFile = File('$yamlPath.modified');
+  if (!markFile.existsSync()) return true;
+
+  final yamlStat = File(yamlPath).statSync();
+  final markStat = markFile.statSync();
+
+  if (yamlStat.modified.isAfter(markStat.modified)) {
+    if (verbose) {
+      print("You have changed to $yamlPath");
+    }
+    return true;
+  }
+
+  try {
+    final file = File(yamlPath);
+    if (file.existsSync()) {
+      final doc = loadYaml(file.readAsStringSync());
+      if (doc is Map) {
+        final data = convertYamlMap(doc as YamlMap);
+        final yamlDir = p.dirname(yamlPath);
+        
+        final filesToCheck = <String>[];
+        
+        if (data.containsKey('Languages')) {
+          final settings = data['settings'] as Map? ?? {};
+          final helperName = settings['helper']?.toString() ?? 'S';
+          final defaultCls = settings['default_class']?.toString() ?? 'TI';
+          final languages = data['Languages'] as List?;
+          
+          filesToCheck.add(p.normalize(p.join(yamlDir, '$helperName.dart')));
+          filesToCheck.add(p.normalize(p.join(yamlDir, '$defaultCls.dart')));
+          if (languages != null) {
+            for (final lang in languages) {
+              if (lang is Map) {
+                final name = lang['name']?.toString() ?? '';
+                if (name.isNotEmpty) {
+                  filesToCheck.add(p.normalize(p.join(yamlDir, '$name.dart')));
+                }
+              }
+            }
+          }
+        } else {
+          final path = data['path']?.toString() ?? '';
+          final part = data['part']?.toString() ?? '';
+          
+          final stateData = data['state'] as Map?;
+          final eventData = data['event'] as Map?;
+          final blocData = data['bloc'] as Map?;
+          
+          final stateDest = stateData?['dest']?.toString() ?? '';
+          final eventDest = eventData?['dest']?.toString() ?? '';
+          final blocDest = blocData?['dest']?.toString() ?? '';
+          
+          String getDestPath(String dest) {
+            if (dest.isEmpty) return '';
+            var resolvedDest = dest;
+            if (resolvedDest.startsWith('.')) {
+              if (part.isNotEmpty) {
+                final partName = p.basenameWithoutExtension(part);
+                resolvedDest = partName + resolvedDest;
+              }
+            }
+            return p.normalize(p.join(yamlDir, path, resolvedDest));
+          }
+
+          final resolvedStateDest = getDestPath(stateDest);
+          final resolvedEventDest = getDestPath(eventDest);
+          final resolvedBlocDest = getDestPath(blocDest);
+          
+          if (resolvedStateDest.isNotEmpty) filesToCheck.add(resolvedStateDest);
+          if (resolvedEventDest.isNotEmpty) filesToCheck.add(resolvedEventDest);
+          if (resolvedBlocDest.isNotEmpty) filesToCheck.add(resolvedBlocDest);
+          
+          if (part.isNotEmpty) {
+            final mainDest = resolvedBlocDest.isNotEmpty ? resolvedBlocDest : (resolvedStateDest.isNotEmpty ? resolvedStateDest : resolvedEventDest);
+            if (mainDest.isNotEmpty) {
+              final baseDir = p.dirname(mainDest);
+              filesToCheck.add(p.normalize(p.join(baseDir, part)));
+            }
+          }
+        }
+
+        for (final pathToCheck in filesToCheck) {
+          if (!File(pathToCheck).existsSync()) {
+            if (verbose) {
+              print("Missing generated file: $pathToCheck");
+            }
+            return true;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    return true;
+  }
+
+  if (verbose) {
+    print("$yamlPath build is still valid");
+  }
+  return false;
+}
+
+void writeMark(String yamlPath) {
+  final markFile = File('$yamlPath.modified');
+  markFile.writeAsStringSync("Don't change\n${DateTime.now()}\n");
+}
+

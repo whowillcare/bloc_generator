@@ -679,7 +679,7 @@ String getCodeStr(Map<String, dynamic> data, String fullname) {
     final partfile = '$partName.c.dart';
     code = "part '$partfile';";
     final partwhere = p.join(p.dirname(fullname), partfile);
-    if (!File(partwhere).existsSync()) {
+    if (!fileExists(partwhere)) {
       writeContent(partwhere, "part of '$partName.dart';\n");
     }
   }
@@ -737,7 +737,7 @@ String allGen(GeneratorArgs args, Map<String, dynamic>? dataRaw, String yamlDir)
       final dest = stateData['dest']?.toString() ?? (data['bloc'] is Map ? data['bloc']['dest']?.toString() ?? '' : '');
       final fullname = getFullname(p.join(yamlDir, path, dest));
       final realFile = getFullname(fullname, mypart: parentFile);
-      if (File(realFile).existsSync()) {
+      if (fileExists(realFile)) {
         stateData['parent'] = realFile;
       } else {
         error("parent specified, but $parentFile's content is not there");
@@ -794,7 +794,7 @@ String allGen(GeneratorArgs args, Map<String, dynamic>? dataRaw, String yamlDir)
     final pArgs = prepare[key]!;
     if (part.isNotEmpty) {
       final fullname = getFullname(pArgs.dest);
-      if (!File(fullname).existsSync()) {
+      if (!fileExists(fullname)) {
         final name = p.basename(fullname);
         final partName = p.basenameWithoutExtension(name);
         final partG = needPart ? "part '$partName.g.dart';" : '';
@@ -839,7 +839,7 @@ part '%state';
     final eventname = getRel(prepare['event']!.dest, fullname);
     final repoFile = prepare['bloc']!.repoFile;
 
-    if (!File(fullname).existsSync()) {
+    if (!fileExists(fullname)) {
       final name = p.basename(fullname);
       final partName = p.basenameWithoutExtension(name);
       final partG = needPart ? "part '$partName.g.dart';" : '';

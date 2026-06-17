@@ -1,3 +1,11 @@
+## 1.0.2
+
+* Implemented `shouldBuild` checks in `build_runner` builders to avoid unnecessary builds and skip execution for unmodified config files.
+* Enhanced builder caching by verifying that all expected output files physically exist before skipping a build.
+* Implemented `preloadReferencedFiles` preloading for user-defined files (like repo classes or parent state classes) using `buildStep.readAsString` to prevent build crashes in sandboxed builder environments.
+* Added CLI argument forwarding support, enabling flags like `-v` or `--verbose` passed to `generator shortcut` to be forwarded directly to the under-the-hood `build_runner` process.
+* Unified and cleaned caching logging outputs, resolving build warning pollution.
+
 ## 1.0.1
 
 * Widened the dependency constraint for the `build` package to resolve version solving conflicts in consumer projects using newer `analyzer` and `test` versions.

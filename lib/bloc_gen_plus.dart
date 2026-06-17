@@ -20,6 +20,16 @@ class I18nBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
+    if (!shouldBuild(inputId.path, verbose: false)) {
+      final path = inputId.path;
+      final newPath = path.substring(0, path.length - '.yaml'.length) + '.i18n.dart';
+      final outputId = AssetId(inputId.package, newPath);
+      await buildStep.writeAsString(
+        outputId,
+        '// Generated i18n marker file for ${inputId.path}\n// Timestamp: ${DateTime.now()}\n',
+      );
+      return;
+    }
     final content = await buildStep.readAsString(inputId);
     final yamlDir = p.dirname(p.join(Directory.current.path, inputId.path));
 
@@ -65,7 +75,7 @@ class I18nBuilder implements Builder {
       );
       await Future.wait(futures);
       try {
-        File('${inputId.path}.modified').writeAsStringSync("Don't change\n${DateTime.now()}\n");
+        writeMark(inputId.path);
       } catch (_) {}
     } finally {
       fileWriter = oldWriter;
@@ -129,6 +139,9 @@ class BlocBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
+    if (!shouldBuild(inputId.path, verbose: false)) {
+      return;
+    }
     final content = await buildStep.readAsString(inputId);
     final yamlDir = p.dirname(p.join(Directory.current.path, inputId.path));
 
@@ -164,15 +177,97 @@ class BlocBuilder implements Builder {
       final doc = loadYaml(content);
       if (doc is Map) {
         final data = convertYamlMap(doc as YamlMap);
+        await preloadReferencedFiles(buildStep, data);
         final args = GeneratorArgs();
         allGen(args, data, yamlDir);
       }
       await Future.wait(futures);
       try {
-        File('${inputId.path}.modified').writeAsStringSync("Don't change\n${DateTime.now()}\n");
+        writeMark(inputId.path);
       } catch (_) {}
     } finally {
       fileWriter = oldWriter;
     }
+  }
+}
+
+Future<void> preloadReferencedFiles(BuildStep buildStep, Map<String, dynamic> data) async {
+  final inputId = buildStep.inputId;
+  final yamlDir = p.dirname(inputId.path);
+  final path = data['path']?.toString() ?? '';
+  final part = data['part']?.toString() ?? '';
+  
+  String resolveFullname(String dest, {String mypart = ''}) {
+    final baseDir = p.dirname(p.normalize(p.join(yamlDir, path, dest)));
+    final filename = mypart.isNotEmpty ? mypart : part;
+    return p.normalize(p.join(baseDir, filename));
+  }
+
+  final filesToPreload = <String>[];
+
+  final stateData = data['state'] as Map?;
+  final eventData = data['event'] as Map?;
+  final blocData = data['bloc'] as Map?;
+  
+  final stateDest = stateData?['dest']?.toString() ?? '';
+  final eventDest = eventData?['dest']?.toString() ?? '';
+  final blocDest = blocData?['dest']?.toString() ?? '';
+  
+  String getDestPath(String dest) {
+    if (dest.isEmpty) return '';
+    var resolvedDest = dest;
+    if (resolvedDest.startsWith('.')) {
+      if (part.isNotEmpty) {
+        final partName = p.basenameWithoutExtension(part);
+        resolvedDest = partName + resolvedDest;
+      }
+    }
+    return p.normalize(p.join(yamlDir, path, resolvedDest));
+  }
+
+  final resolvedStateDest = getDestPath(stateDest);
+  final resolvedEventDest = getDestPath(eventDest);
+  final resolvedBlocDest = getDestPath(blocDest);
+
+  if (part.isNotEmpty) {
+    final mainDest = resolvedBlocDest.isNotEmpty ? resolvedBlocDest : (resolvedStateDest.isNotEmpty ? resolvedStateDest : resolvedEventDest);
+    if (mainDest.isNotEmpty) {
+      final mainFullname = resolveFullname(mainDest);
+      filesToPreload.add(mainFullname);
+    }
+  }
+  
+  if (resolvedStateDest.isNotEmpty) filesToPreload.add(resolvedStateDest);
+  if (resolvedEventDest.isNotEmpty) filesToPreload.add(resolvedEventDest);
+  if (resolvedBlocDest.isNotEmpty) filesToPreload.add(resolvedBlocDest);
+
+  if (stateData != null && stateData.containsKey('parent')) {
+    final parentFile = stateData['parent']?.toString() ?? '';
+    if (parentFile.isNotEmpty) {
+      final mainDest = resolvedBlocDest.isNotEmpty ? resolvedBlocDest : resolvedStateDest;
+      if (mainDest.isNotEmpty) {
+        final parentPath = resolveFullname(mainDest, mypart: parentFile);
+        filesToPreload.add(parentPath);
+      }
+    }
+  }
+
+  if (blocData != null && blocData.containsKey('repo_file')) {
+    final repoFile = blocData['repo_file']?.toString() ?? '';
+    if (repoFile.isNotEmpty) {
+      final repoPath = p.normalize(p.join(yamlDir, path, repoFile));
+      filesToPreload.add(repoPath);
+    }
+  }
+
+  for (final relPath in filesToPreload) {
+    final assetId = AssetId(inputId.package, relPath);
+    try {
+      if (await buildStep.canRead(assetId)) {
+        final fileContent = await buildStep.readAsString(assetId);
+        final absolutePath = p.canonicalize(p.join(Directory.current.path, relPath));
+        inMemoryFiles[absolutePath] = fileContent;
+      }
+    } catch (_) {}
   }
 }

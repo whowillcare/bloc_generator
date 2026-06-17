@@ -7,8 +7,9 @@ import 'package:bloc_gen_plus/src/bloc_generator.dart';
 import 'package:bloc_gen_plus/src/i18n_generator.dart';
 
 void main(List<String> args) {
-  if (args.isEmpty || args[0] == 'shortcut') {
-    handleShortcutCommand();
+  if (args.isEmpty || args[0] == 'shortcut' || args[0].startsWith('-')) {
+    final extraArgs = args.isNotEmpty && args[0] == 'shortcut' ? args.sublist(1) : args;
+    handleShortcutCommand(extraArgs);
     return;
   }
 
@@ -186,28 +187,9 @@ RegExp globToRegex(String glob) {
   return RegExp('^$regexStr\$');
 }
 
-bool shouldBuild(String yamlPath) {
-  final markFile = File('$yamlPath.modified');
-  if (!markFile.existsSync()) return true;
-  
-  final yamlStat = File(yamlPath).statSync();
-  final markStat = markFile.statSync();
-  
-  if (yamlStat.modified.isAfter(markStat.modified)) {
-    print("You have changed to $yamlPath");
-    return true;
-  }
-  
-  print("$yamlPath build is still valid");
-  return false;
-}
 
-void writeMark(String yamlPath) {
-  final markFile = File('$yamlPath.modified');
-  markFile.writeAsStringSync("Don't change\n${DateTime.now()}\n");
-}
 
-void handleShortcutCommand() {
+void handleShortcutCommand([List<String> extraArgs = const []]) {
   List<String> blocGlobs = [];
   List<String> i18nGlobs = [];
   
@@ -344,7 +326,7 @@ void handleShortcutCommand() {
   print("Running build_runner runner...");
   final result = Process.runSync(
     'dart',
-    ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+    ['run', 'build_runner', 'build', '--delete-conflicting-outputs', ...extraArgs],
     runInShell: true,
   );
   stdout.write(result.stdout);

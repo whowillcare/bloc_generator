@@ -1,4 +1,4 @@
-# bloc_generator
+# bloc_gen_plus
 
 A modern, fast, and fully automated Dart/Flutter package for generating **Bloc classes** (State, Event, Bloc) and **i18n translation/localization files** directly from simple YAML configuration files.
 
@@ -17,7 +17,7 @@ It supports both a **Command Line Interface (CLI)** for direct code generation a
 
 ## Installation & Setup
 
-Add `bloc_generator` and its peer dependencies to your Dart or Flutter project:
+Add `bloc_gen_plus` and its peer dependencies to your Dart or Flutter project:
 
 ```yaml
 dependencies:
@@ -30,7 +30,7 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.4.6
   json_serializable: ^6.7.1
-  bloc_generator:
+  bloc_gen_plus:
     path: ./ # Or git/pub reference
 ```
 
@@ -45,11 +45,11 @@ To leverage the Dart build framework for automated compile-time generation:
    targets:
      $default:
        builders:
-         bloc_generator|bloc_builder:
+         bloc_gen_plus|bloc_builder:
            enabled: true
            generate_for:
              - lib/bloc/*.yaml
-         bloc_generator|i18n_builder:
+         bloc_gen_plus|i18n_builder:
            enabled: true
            generate_for:
              - lib/i18n/*.yaml
