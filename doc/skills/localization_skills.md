@@ -16,27 +16,47 @@ This guide details the localization workflow for developers and AI agents using 
 Whenever a new user-facing string is required in your UI or logic code:
 
 ### Step 1: Search Existing Translations
-Search the primary translation YAML file (usually [strings.yaml](file:///home/sam/Projects/bloc_generator/example/lib/i18n/strings.yaml)) or the generated localization helper file (e.g., [StringHelper.dart](file:///home/sam/Projects/bloc_generator/example/lib/i18n/StringHelper.dart)) to see if a suitable key already exists.
+Always search the generated localization helper file first (usually [StringHelper.dart](../../example/lib/i18n/StringHelper.dart)) to see if a suitable key already exists.
+- **Why Search the Helper First?** The helper file compiles and aggregates all keys from all partitioned translation files into one place. This makes searching for existing definitions much faster and avoids scanning multiple configuration files.
+- If the key is not in the helper, you can also cross-check the primary configuration file [strings.yaml](../../example/lib/i18n/strings.yaml) or search the individual sub-files within the include subdirectory.
 - If it exists, retrieve and reuse the key.
 
-### Step 2: Add the String to the YAML
-If the string does not exist, add it to the `Strings` section in the translation YAML (e.g., `strings.yaml`).
-- Maintain the exact order of translations specified in the `Languages` section. For example, if your languages are defined as English first, then Chinese:
-  ```yaml
-  Strings:
-    NewGreeting:
-      - Hello!      # English (Default/First)
-      - 你好！       # Chinese (Second)
-  ```
-- If you need to define parameterized strings (translations mapping dynamically based on a key), use a map format under the key:
-  ```yaml
-  Strings:
-    SleepAnalysisDesc:
-      - init: Start your sleep tracking.
-        good: You slept well today.
-      - init: 开始追踪您的睡眠。
-        good: 您今天睡得很好。
-  ```
+### Step 2: Partition and Add the String to the Sub-YAML Files
+If the translation key does not exist, do not dump it into the root [strings.yaml](../../example/lib/i18n/strings.yaml). Instead, organize and partition your translation files logically into a subdirectory:
+
+1. **Leverage the `include` Directive**:
+   Ensure your main [strings.yaml](../../example/lib/i18n/strings.yaml) is configured to include a subdirectory of translation files in the `settings` block:
+   ```yaml
+   settings:
+     l18n: l19n
+     delegate: TRDelegate
+     helper: StringHelper
+     default_object: TR
+     default_class: TS
+     include: strings  # Automatically includes all recursively found YAML files in the 'strings' subdirectory
+   ```
+
+2. **Partition Logically**:
+   Identify or create a YAML file in the `strings` subdirectory (e.g., `sleep.yaml` or `measures.yaml`) that logically corresponds to the domain/feature of the string you are creating.
+   - *Example*: All sleep tracking UI or analysis strings should go into `strings/sleep.yaml`. Measurement metrics should go into `strings/measures.yaml`.
+   - If a new feature or domain is introduced, create a new sub-file (e.g., `strings/settings.yaml`) to keep strings organized, human-friendly, and modular.
+
+3. **Format Translations**:
+   Add the new translation keys directly to the partitioned file. Note that files in the `include` subdirectory **must not** start with a `Strings:` root key; their top-level keys are merged directly into the global translation namespace.
+   - Maintain the exact order of translations specified in the `Languages` section of [strings.yaml](../../example/lib/i18n/strings.yaml) (e.g. English first, Chinese second):
+     ```yaml
+     NewGreeting:
+       - Hello!      # English (Default/First)
+       - 你好！       # Chinese (Second)
+     ```
+   - If you need to define parameterized strings (translations mapping dynamically based on a key), use a map format under the key:
+     ```yaml
+     SleepAnalysisDesc:
+       - init: Start your sleep tracking.
+         good: You slept well today.
+       - init: 开始追踪您的睡眠。
+         good: 您今天睡得很好。
+     ```
 
 ### Step 3: Run the Code Generator
 Regenerate the strongly-typed Dart files to create the helper variables and method bindings for the new key:

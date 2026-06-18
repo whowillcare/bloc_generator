@@ -1,3 +1,8 @@
+## 1.2.1
+
+* Updated localization skill documentation (`localization_skills.md`) to use relative paths, search the helper Dart file first, leverage the `include` directive, and partition translation sub-files logically.
+* Added `path_convention_skill.md` defining Markdown relative path conventions for this repository.
+
 ## 1.2.0
 
 * Added AI-friendly skill documentation under `doc/skills/` directory for developer and automated agent guidance.

@@ -1,6 +1,6 @@
 name: bloc_gen_plus
 description: A Dart/Flutter code generator for Bloc classes and i18n localization files.
-version: 1.2.0
+version: 1.2.1
 homepage: https://github.com/whowillcare/bloc_generator
 repository: https://github.com/whowillcare/bloc_generator
 issue_tracker: https://github.com/whowillcare/bloc_generator/issues
