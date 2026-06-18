@@ -1,3 +1,9 @@
+## 1.2.0
+
+* Added AI-friendly skill documentation under `doc/skills/` directory for developer and automated agent guidance.
+* Added `bloc_generate_skills.md` explaining Bloc specification format, build systems (`build.yaml` and `build.xml`), and custom placeholder implementation.
+* Added `localization_skills.md` documenting strict localization workflows, translation settings mapping, and programmatic accessing via BuildContext or global delegates.
+
 ## 1.1.0
 
 * Added support for loading and merging translation strings from a subdirectory using the `include` setting in the main translation YAML.
