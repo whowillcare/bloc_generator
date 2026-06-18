@@ -1,3 +1,7 @@
+## 1.2.2
+
+* Configured builders to only run on the root package. Checks input package names against the root package name to skip builder execution for external dependency packages.
+
 ## 1.2.1
 
 * Updated localization skill documentation (`localization_skills.md`) to use relative paths, search the helper Dart file first, leverage the `include` directive, and partition translation sub-files logically.

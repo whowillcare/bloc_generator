@@ -11,6 +11,22 @@ import 'src/i18n_generator.dart';
 Builder i18nBuilder(BuilderOptions options) => I18nBuilder();
 Builder blocBuilder(BuilderOptions options) => BlocBuilder();
 
+String? _rootPackageName;
+
+String _getRootPackageName() {
+  if (_rootPackageName != null) return _rootPackageName!;
+  try {
+    final pubspecFile = File('pubspec.yaml');
+    if (pubspecFile.existsSync()) {
+      final doc = loadYaml(pubspecFile.readAsStringSync());
+      if (doc is Map && doc.containsKey('name')) {
+        _rootPackageName = doc['name']?.toString();
+      }
+    }
+  } catch (_) {}
+  return _rootPackageName ??= '';
+}
+
 class I18nBuilder implements Builder {
   @override
   Map<String, List<String>> get buildExtensions => const {
@@ -20,6 +36,10 @@ class I18nBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
+    final rootPackage = _getRootPackageName();
+    if (rootPackage.isNotEmpty && inputId.package != rootPackage) {
+      return;
+    }
     final outputId = inputId.changeExtension('.i18n.dart');
 
     // First read the content of the file to see if it is a main i18n file
@@ -174,6 +194,10 @@ class BlocBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
+    final rootPackage = _getRootPackageName();
+    if (rootPackage.isNotEmpty && inputId.package != rootPackage) {
+      return;
+    }
     if (!shouldBuild(inputId.path, verbose: false)) {
       return;
     }
