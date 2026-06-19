@@ -3,7 +3,7 @@ builders:
     import: 'package:bloc_gen_plus/bloc_gen_plus.dart'
     builder_factories: ['i18nBuilder']
     build_extensions: {'.yaml': ['.i18n.dart']}
-    auto_apply: dependents
+    auto_apply: root_package
     build_to: cache
 
   bloc_builder:
@@ -51,6 +51,6 @@ builders:
         '.c.dart'
       ]
     }
-    auto_apply: dependents
+    auto_apply: root_package
     build_to: source
     runs_before: ["json_serializable:json_serializable"]

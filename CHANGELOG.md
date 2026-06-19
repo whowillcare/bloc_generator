@@ -1,3 +1,7 @@
+## 1.2.3
+
+* Configured `auto_apply: root_package` for both `i18n_builder` and `bloc_builder` in `build.yaml` to ensure builders are only applied to the root package. This prevents potential file conflicts with already generated files in dependency packages during build definition setup.
+
 ## 1.2.2
 
 * Configured builders to only run on the root package. Checks input package names against the root package name to skip builder execution for external dependency packages.
